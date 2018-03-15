@@ -95,7 +95,7 @@ namespace FME
 
             /* Create new compound matrix [A|b] from previous by projecting one variable */
             int new_m = nUpperBounds * nLowerBounds + nExcludes;
-            int new_n = n - 1;
+            int new_n = temp_Ab.ColumnCount - 1;
             if (new_m != 0)
             {
                 Matrix<double> new_Ab = Matrix<double>.Build.Dense(new_m, new_n);
@@ -111,11 +111,16 @@ namespace FME
                 }
 
                 /* Add the exclude rows */
-                new_Ab.SetSubMatrix(new_m - nExcludes, 0, temp_Ab.SubMatrix(nLowerBounds, nExcludes, 1, new_n));
+                if (nExcludes > 0)
+                {
+                    new_Ab.SetSubMatrix(new_m - nExcludes, 0, temp_Ab.SubMatrix(nLowerBounds, nExcludes, 1, new_n));
+                }
 
                 /* Obtain new matrix A and vector b */
-                Matrix<double> new_A = new_Ab.RemoveColumn(new_n);
-                Matrix<double> new_b = new_Ab.Column(new_n).ToColumnMatrix();
+                Matrix<double> new_A = new_Ab.RemoveColumn(new_n - 1);
+                Matrix<double> new_b = new_Ab.Column(new_n - 1).ToColumnMatrix();
+
+                temp_Ab = new_Ab;
             }
 
             return temp_Ab;
