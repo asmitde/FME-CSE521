@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Linq;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
@@ -141,24 +142,22 @@ namespace FME
 
             using (StreamReader sr = File.OpenText(inputfile))
             {
+                /* Read line 1: value of m and n */
                 string line = sr.ReadLine();
                 if (line == null)
                 {
                     throw new Exception("Invalid file content.");
                 }
 
-                string[] num_str = line.Split();
-                int dim_n = num_str.Length;
+                string[] num_str = line.Split().Where(s => s != string.Empty).ToArray();
+                int m = Convert.ToUInt16(num_str[0]);
+                int n = Convert.ToUInt16(num_str[1]);
 
-                matrix_A = Matrix<double>.Build.Dense(dim_n, dim_n);
-                vector_b = Matrix<double>.Build.Dense(dim_n, 1);
+                matrix_A = Matrix<double>.Build.Dense(m, n);
+                vector_b = Matrix<double>.Build.Dense(m, 1);
 
-                for (int j = 0; j < dim_n; j++)
-                {
-                    matrix_A[0, j] = Convert.ToDouble(num_str[j]);
-                }
-                
-                for (int i = 1; i < dim_n; i++)
+                /* Read next m lines: each row of the matrix A (m X n) */
+                for (int i = 0; i < m; i++)
                 {
                     line = sr.ReadLine();
                     if (line == null)
@@ -166,14 +165,15 @@ namespace FME
                         throw new Exception("Invalid file content.");
                     }
 
-                    num_str = line.Split();
-                    for (int j = 0; j < dim_n; j++)
+                    num_str = line.Split().Where(s => s != string.Empty).ToArray();
+                    for (int j = 0; j < n; j++)
                     {
                         matrix_A[i, j] = Convert.ToDouble(num_str[j]);
                     }
                 }
 
-                for (int i = 0; i < dim_n; i++)
+                /* Read next n lines: the vector B (m X 1) */
+                for (int i = 0; i < m; i++)
                 {
                     line = sr.ReadLine();
                     if (line == null)
@@ -181,7 +181,7 @@ namespace FME
                         throw new Exception("Invalid file content.");
                     }
 
-                    num_str = line.Split();
+                    num_str = line.Split().Where(s => s != string.Empty).ToArray();
                     vector_b[i, 0] = Convert.ToDouble(num_str[0]);
                 }
             }
