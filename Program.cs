@@ -92,7 +92,18 @@ namespace FME
                 }
             }
 
-            /* Create new matrix A */
+            /* Create new compound matrix [A|b] from previous by projecting one variable */
+            Matrix<double> new_Ab = Matrix<double>.Build.Dense(nUpperBounds * nLowerBounds + nExcludes, n);
+
+            /* Iterate through all the upper bound rows and add each to all lower bound rows */
+            for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
+            {
+                for (int j = 0; j < nLowerBounds; j++)
+                {
+                    
+                }
+            }
+
             return temp_Ab;
         }
 
