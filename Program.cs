@@ -1,14 +1,16 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace FME
 {
     class Program
     {
-        private static double[][] matrix_A;
-        private static double[][] vector_b;
-        private static double[][] reducedMatrix_Ab;
+        private static Matrix<double> matrix_A;
+        private static Matrix<double> vector_b;
+        private static Matrix<double> reducedMatrix_Ab;
 
         static void Main(string[] args)
         {
@@ -34,53 +36,73 @@ namespace FME
 
             /* Display Matrix data for A and b */
             Console.WriteLine("\nMatrix A:");
-            DisplayMatrix(matrix_A);
+            Console.WriteLine(matrix_A.ToMatrixString());
             Console.WriteLine("\nVector b:");
-            DisplayMatrix(vector_b);
+            Console.WriteLine(vector_b.ToMatrixString());
 
             /* Perform FME */
             reducedMatrix_Ab = DoFME(matrix_A, vector_b);
 
             /* Display FME reduced compound matrix [A|b]*/
             Console.WriteLine("\nFME Reduced Compound Matrix [A|b]:");
-            DisplayMatrix(reducedMatrix_Ab);
+            Console.WriteLine(reducedMatrix_Ab.ToMatrixString());
         }
 
-        private static double[][] DoFME(double[][] mat_A, double[][] vec_b)
+        private static Matrix<double> DoFME(Matrix<double> mat_A, Matrix<double> vec_b)
         {
             /* Get matrix A dimension */
-            int m = mat_A.GetLength(0);
-            int n = mat_A[0].GetLength(0);
+            int m = mat_A.RowCount;
+            int n = mat_A.ColumnCount;
 
             /* Create new compound matrix [A|b]*/
-            double[][] mat_Ab = new double[m][];
+            Matrix<double> temp_Ab = Matrix<double>.Build.Dense(m, n + 1);
+            mat_A.Append(vec_b, temp_Ab);
 
-            /* Copy values from A and b */
-            for (int i = 0; i < m; i++)
-            {
-                mat_Ab[i] = new double[n + 1];
-                for (int j = 0; j < n; j++)
-                {
-                    mat_Ab[i][j] = mat_A[i][j];
-                }
-
-                mat_Ab[i][n] = vec_b[i][0];
-            }
+        #if true
+            Console.WriteLine("\ntemp_Ab:");
+            Console.WriteLine(temp_Ab.ToMatrixString());
+        #endif
 
             /* Divide matrix based on the upper bounds, lower bounds, and zeroes */
-            double[][] temp_Ab = mat_Ab.OrderBy(i => i[0]).ToArray();
+            Vector<double> column0 = temp_Ab.Column(0);
+            int[] permutation = Enumerable.Range(0, column0.Count).ToArray();
+            Array.Sort(column0.ToArray(), permutation);
+            temp_Ab.PermuteRows(new Permutation(permutation));
 
-            mat_Ab = (double[][])temp_Ab.Clone();
-            return mat_Ab;
+            int nLowerBounds = column0.Where(i => i < 0).Count();
+            int nUpperBounds = column0.Where(i => i > 0).Count();
+            int nExcludes = column0.Where(i => i == 0).Count();
+
+            /* Normalize based on first column absolute value */
+            for (int i = 0; i < nLowerBounds; i++)
+            {
+                double i0Val = Math.Abs(temp_Ab[i, 0]);
+                for (int j = 0; j < temp_Ab.ColumnCount; j++)
+                {
+                    temp_Ab[i, j] = temp_Ab[i, j] / i0Val;
+                }
+            }
+ 
+            for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
+            {
+                double i0Val = temp_Ab[i, 0];
+                for (int j = 0; j < temp_Ab.ColumnCount; j++)
+                {
+                    temp_Ab[i, j] = temp_Ab[i, j] / i0Val;
+                }
+            }
+
+            
+            return temp_Ab;
         }
 
-        private static void DisplayMatrix(double[][] matrix)
+        private static void DisplayMatrix(Matrix<double> matrix)
         {
-            for (int i = 0; i < matrix.GetLength(0); i++)
+            for (int i = 0; i < matrix.RowCount; i++)
             {
-                for (int j = 0; j < matrix[i].GetLength(0); j++)
+                for (int j = 0; j < matrix.ColumnCount; j++)
                 {
-                    Console.Write($"{matrix[i][j]}\t");
+                    Console.Write($"{matrix[i, j]}\t");
                 }
                 Console.WriteLine();
             }
@@ -104,13 +126,12 @@ namespace FME
                 string[] num_str = line.Split();
                 int dim_n = num_str.Length;
 
-                matrix_A = new double[dim_n][];
-                vector_b = new double[dim_n][];
+                matrix_A = Matrix<double>.Build.Dense(dim_n, dim_n);
+                vector_b = Matrix<double>.Build.Dense(dim_n, 1);
 
-                matrix_A[0] = new double[dim_n];
                 for (int j = 0; j < dim_n; j++)
                 {
-                    matrix_A[0][j] = Convert.ToDouble(num_str[j]);
+                    matrix_A[0, j] = Convert.ToDouble(num_str[j]);
                 }
                 
                 for (int i = 1; i < dim_n; i++)
@@ -122,10 +143,9 @@ namespace FME
                     }
 
                     num_str = line.Split();
-                    matrix_A[i] = new double[dim_n];
                     for (int j = 0; j < dim_n; j++)
                     {
-                        matrix_A[i][j] = Convert.ToDouble(num_str[j]);
+                        matrix_A[i, j] = Convert.ToDouble(num_str[j]);
                     }
                 }
 
@@ -138,8 +158,7 @@ namespace FME
                     }
 
                     num_str = line.Split();
-                    vector_b[i] = new double[1];
-                    vector_b[i][0] = Convert.ToDouble(num_str[0]);
+                    vector_b[i, 0] = Convert.ToDouble(num_str[0]);
                 }
             }
         }
