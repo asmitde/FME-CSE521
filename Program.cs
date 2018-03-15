@@ -121,18 +121,6 @@ namespace FME
             return temp_Ab;
         }
 
-        private static void DisplayMatrix(Matrix<double> matrix)
-        {
-            for (int i = 0; i < matrix.RowCount; i++)
-            {
-                for (int j = 0; j < matrix.ColumnCount; j++)
-                {
-                    Console.Write($"{matrix[i, j]}\t");
-                }
-                Console.WriteLine();
-            }
-        }
-
         private static void ReadMatrixDataFromFile(string inputfile)
         {
             if (!File.Exists(inputfile))
@@ -172,7 +160,7 @@ namespace FME
                     }
                 }
 
-                /* Read next n lines: the vector B (m X 1) */
+                /* Read next n lines: the vector b (m X 1) */
                 for (int i = 0; i < m; i++)
                 {
                     line = sr.ReadLine();
