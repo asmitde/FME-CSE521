@@ -54,11 +54,11 @@ namespace FME
             int m = mat_A.RowCount;
             int n = mat_A.ColumnCount;
 
-            /* Create new compound matrix [A|b]*/
+            /* Create compound matrix [A|b]*/
             Matrix<double> temp_Ab = Matrix<double>.Build.Dense(m, n + 1);
             mat_A.Append(vec_b, temp_Ab);
 
-        #if true
+        #if false
             Console.WriteLine("\ntemp_Ab:");
             Console.WriteLine(temp_Ab.ToMatrixString());
         #endif
@@ -92,7 +92,7 @@ namespace FME
                 }
             }
 
-            
+            /* Create new matrix A */
             return temp_Ab;
         }
 
