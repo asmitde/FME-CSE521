@@ -93,15 +93,28 @@ namespace FME
             }
 
             /* Create new compound matrix [A|b] from previous by projecting one variable */
-            Matrix<double> new_Ab = Matrix<double>.Build.Dense(nUpperBounds * nLowerBounds + nExcludes, n);
-
-            /* Iterate through all the upper bound rows and add each to all lower bound rows */
-            for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
+            int new_m = nUpperBounds * nLowerBounds + nExcludes;
+            int new_n = n - 1;
+            if (new_m != 0)
             {
-                for (int j = 0; j < nLowerBounds; j++)
+                Matrix<double> new_Ab = Matrix<double>.Build.Dense(new_m, new_n);
+
+                /* Iterate through all the upper bound rows and add each to all lower bound rows */
+                int rowIndex = 0;
+                for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
                 {
-                    
+                    for (int j = 0; j < nLowerBounds; j++)
+                    {
+                        new_Ab.SetRow(rowIndex++, temp_Ab.Row(i, 1, new_n) + temp_Ab.Row(j, 1, new_n));
+                    }
                 }
+
+                /* Add the exclude rows */
+                new_Ab.SetSubMatrix(new_m - nExcludes, 0, temp_Ab.SubMatrix(nLowerBounds, nExcludes, 1, new_n));
+
+                /* Obtain new matrix A and vector b */
+                Matrix<double> new_A = new_Ab.RemoveColumn(new_n);
+                Matrix<double> new_b = new_Ab.Column(new_n).ToColumnMatrix();
             }
 
             return temp_Ab;
