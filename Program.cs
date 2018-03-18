@@ -48,7 +48,12 @@ namespace FME
 
             foreach (var solution in allSolutions)
             {
-                Console.WriteLine(solution.ToString());
+                foreach (var solutionVector in solution)
+                {
+                    Console.Write(solutionVector + "\t");
+                }
+
+                Console.WriteLine();
             }
         }
 
@@ -181,7 +186,7 @@ namespace FME
                 mat_x.SetColumn(col, solutions[col].ToArray());
             }
 
-            Matrix<double> mat_Atimesx = temp_Ab.RemoveColumn(0) * mat_x;
+            Matrix<double> mat_Atimesx = temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved) * mat_x;
 
             /* Iterate over all the existing solution vectors and create new solution vectors by adding new variable solutions */
             for (int col = 0; col < n_sols; col++)
