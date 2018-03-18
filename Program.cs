@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Linq;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
@@ -11,7 +11,6 @@ namespace FME
     {
         private static Matrix<double> matrix_A;
         private static Matrix<double> vector_b;
-        private static Matrix<double> reducedMatrix_Ab;
 
         static void Main(string[] args)
         {
@@ -42,14 +41,18 @@ namespace FME
             Console.WriteLine(vector_b.ToMatrixString());
 
             /* Perform FME */
-            reducedMatrix_Ab = DoFME(matrix_A, vector_b);
+            List<List<double>> allSolutions = DoFME(matrix_A, vector_b);
 
-            /* Display FME reduced compound matrix [A|b]*/
-            Console.WriteLine("\nFME Reduced Compound Matrix [A|b]:");
-            Console.WriteLine(reducedMatrix_Ab.ToMatrixString());
+            /* Display solutions for vector x */
+            Console.WriteLine("\nSolutions to Vector x:");
+
+            foreach (var solution in allSolutions)
+            {
+                Console.WriteLine(solution.ToString());
+            }
         }
 
-        private static Matrix<double> DoFME(Matrix<double> mat_A, Matrix<double> vec_b)
+        private static List<List<double>> DoFME(Matrix<double> mat_A, Matrix<double> vec_b)
         {
             /* Get matrix A dimension */
             int m = mat_A.RowCount;
@@ -66,13 +69,26 @@ namespace FME
 
             /* Divide matrix based on the upper bounds, lower bounds, and zeroes */
             Vector<double> column0 = temp_Ab.Column(0);
+            int[] permutationKey = Enumerable.Range(0, column0.Count).ToArray();
+            Array.Sort(column0.ToArray(), permutationKey);
             int[] permutation = Enumerable.Range(0, column0.Count).ToArray();
-            Array.Sort(column0.ToArray(), permutation);
+            Array.Sort(permutationKey, permutation);
             temp_Ab.PermuteRows(new Permutation(permutation));
+
+        #if true
+            Console.WriteLine("\nSorted temp_Ab:");
+            Console.WriteLine(temp_Ab.ToMatrixString());
+        #endif
 
             int nLowerBounds = column0.Where(i => i < 0).Count();
             int nUpperBounds = column0.Where(i => i > 0).Count();
             int nExcludes = column0.Where(i => i == 0).Count();
+
+            /* Return null if there are no upper or lower bounds - no closed solution space exists */
+            if (nLowerBounds == 0 || nUpperBounds == 0)
+            {
+                return null;
+            }
 
             /* Normalize based on first column absolute value */
             for (int i = 0; i < nLowerBounds; i++)
@@ -93,37 +109,103 @@ namespace FME
                 }
             }
 
+        #if true
+            Console.WriteLine("\nnormalized temp_Ab:");
+            Console.WriteLine(temp_Ab.ToMatrixString());
+        #endif
+
+            /* If last variable, then find integer upper and lower bounds */
+            if (temp_Ab.ColumnCount == 2)
+            {
+
+                int lowerBound = (int) Math.Ceiling(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum()); // Minimum, since coeffs are negative
+                int upperBound = (int) Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
+
+                List<List<double>> newSolutions = new List<List<double>>();
+                for (int i = lowerBound; i <= upperBound; i++)
+                {
+                    newSolutions.Add(new List<double>(){i});
+                }
+
+                return newSolutions;
+            }
+
             /* Create new compound matrix [A|b] from previous by projecting one variable */
             int new_m = nUpperBounds * nLowerBounds + nExcludes;
             int new_n = temp_Ab.ColumnCount - 1;
-            if (new_m != 0)
+
+            Matrix<double> new_Ab = Matrix<double>.Build.Dense(new_m, new_n);
+
+            /* Iterate through all the upper bound rows and add each to all lower bound rows */
+            int rowIndex = 0;
+            for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
             {
-                Matrix<double> new_Ab = Matrix<double>.Build.Dense(new_m, new_n);
-
-                /* Iterate through all the upper bound rows and add each to all lower bound rows */
-                int rowIndex = 0;
-                for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
+                for (int j = 0; j < nLowerBounds; j++)
                 {
-                    for (int j = 0; j < nLowerBounds; j++)
-                    {
-                        new_Ab.SetRow(rowIndex++, temp_Ab.Row(i, 1, new_n) + temp_Ab.Row(j, 1, new_n));
-                    }
+                    new_Ab.SetRow(rowIndex++, temp_Ab.Row(i, 1, new_n) + temp_Ab.Row(j, 1, new_n));
                 }
-
-                /* Add the exclude rows */
-                if (nExcludes > 0)
-                {
-                    new_Ab.SetSubMatrix(new_m - nExcludes, 0, temp_Ab.SubMatrix(nLowerBounds, nExcludes, 1, new_n));
-                }
-
-                /* Obtain new matrix A and vector b */
-                Matrix<double> new_A = new_Ab.RemoveColumn(new_n - 1);
-                Matrix<double> new_b = new_Ab.Column(new_n - 1).ToColumnMatrix();
-
-                temp_Ab = new_Ab;
             }
 
-            return temp_Ab;
+            /* Add the exclude rows */
+            if (nExcludes > 0)
+            {
+                new_Ab.SetSubMatrix(new_m - nExcludes, 0, temp_Ab.SubMatrix(nLowerBounds, nExcludes, 1, new_n));
+            }
+
+            /* Obtain new matrix A and vector b */
+            Matrix<double> new_A = new_Ab.RemoveColumn(new_n - 1);
+            Matrix<double> new_b = new_Ab.Column(new_n - 1).ToColumnMatrix();
+
+        #if true
+            Console.WriteLine("\nnew_A:");
+            Console.WriteLine(new_A.ToMatrixString());
+            Console.WriteLine("\nnew_b:");
+            Console.WriteLine(new_b.ToMatrixString());
+        #endif
+
+            /* Recursively call FME with the projected matrix and receive a list of solution vectors */
+            List<List<double>> solutions = DoFME(new_A, new_b);
+
+            if (solutions == null)
+            {
+                return null;
+            }           
+
+            /* Calculate new bounds on current variable */
+            int n_sols = solutions.Count;
+            int variablesSolved = solutions[0].Count;
+
+            Matrix<double> mat_x = Matrix<double>.Build.Dense(variablesSolved, n_sols);
+            for (int col = 0; col < solutions.Count; col++)
+            {
+                mat_x.SetColumn(col, solutions[col].ToArray());
+            }
+
+            Matrix<double> mat_Atimesx = temp_Ab.RemoveColumn(0) * mat_x;
+
+            /* Iterate over all the existing solution vectors and create new solution vectors by adding new variable solutions */
+            for (int col = 0; col < n_sols; col++)
+            {
+                Vector<double> preBoundsList = temp_Ab.Column(temp_Ab.ColumnCount - 1) - mat_Atimesx.Column(col);
+                
+                /* Backup original solution vector remove the existing one */
+                List<double> originalSolutionVector = new List<double>(solutions[col]);
+                solutions.RemoveAt(col);
+
+                int lowerBound = (int) Math.Ceiling(preBoundsList.SubVector(0, nLowerBounds).Minimum()); // Minimum, since coeffs are negative
+                int upperBound = (int) Math.Floor(preBoundsList.SubVector(temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
+
+                /* Add new variable solution to the previous solution vector */
+                for (int i = upperBound; i >= lowerBound; i--)
+                {
+                    List<double> newSolutionVector = new List<double>(originalSolutionVector);
+                    newSolutionVector.Insert(0, i);
+
+                    solutions.Insert(col, newSolutionVector);
+                }
+            }
+
+            return solutions;
         }
 
         private static void ReadMatrixDataFromFile(string inputfile)
