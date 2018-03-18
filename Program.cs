@@ -126,13 +126,13 @@ namespace FME
                 int lowerBound = (int) ((-1) * Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
                 int upperBound = (int) Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
-                List<List<double>> newSolutions = new List<List<double>>();
+                List<List<double>> firstSolution = new List<List<double>>();
                 for (int i = lowerBound; i <= upperBound; i++)
                 {
-                    newSolutions.Add(new List<double>(){i});
+                    firstSolution.Add(new List<double>(){i});
                 }
 
-                return newSolutions;
+                return firstSolution;
             }
 
             /* Create new compound matrix [A|b] from previous by projecting one variable */
@@ -186,31 +186,38 @@ namespace FME
                 mat_x.SetColumn(col, solutions[col].ToArray());
             }
 
+        #if true
+            Console.WriteLine("\nmat_x:");
+            Console.WriteLine(mat_x.ToMatrixString());
+        #endif
+
             Matrix<double> mat_Atimesx = temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved) * mat_x;
 
+        #if true
+            Console.WriteLine("\nmat_Atimesx:");
+            Console.WriteLine(mat_Atimesx.ToMatrixString());
+        #endif
+
             /* Iterate over all the existing solution vectors and create new solution vectors by adding new variable solutions */
+            List<List<double>> newSolutions = new List<List<double>>();
             for (int col = 0; col < n_sols; col++)
             {
                 Vector<double> preBoundsList = temp_Ab.Column(temp_Ab.ColumnCount - 1) - mat_Atimesx.Column(col);
-                
-                /* Backup original solution vector remove the existing one */
-                List<double> originalSolutionVector = new List<double>(solutions[col]);
-                solutions.RemoveAt(col);
 
                 int lowerBound = (int) ((-1) * Math.Floor(preBoundsList.SubVector(0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
                 int upperBound = (int) Math.Floor(preBoundsList.SubVector(temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
                 /* Add new variable solution to the previous solution vector */
-                for (int i = upperBound; i >= lowerBound; i--)
+                for (int i = lowerBound; i <= upperBound; i++)
                 {
-                    List<double> newSolutionVector = new List<double>(originalSolutionVector);
+                    List<double> newSolutionVector = new List<double>(solutions[col]);
                     newSolutionVector.Insert(0, i);
 
-                    solutions.Insert(col, newSolutionVector);
+                    newSolutions.Add(newSolutionVector);
                 }
             }
 
-            return solutions;
+            return newSolutions;
         }
 
         private static void ReadMatrixDataFromFile(string inputfile)
