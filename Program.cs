@@ -118,7 +118,7 @@ namespace FME
             if (temp_Ab.ColumnCount == 2)
             {
 
-                int lowerBound = (int) Math.Ceiling(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum()); // Minimum, since coeffs are negative
+                int lowerBound = (int) ((-1) * Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
                 int upperBound = (int) Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
                 List<List<double>> newSolutions = new List<List<double>>();
@@ -192,7 +192,7 @@ namespace FME
                 List<double> originalSolutionVector = new List<double>(solutions[col]);
                 solutions.RemoveAt(col);
 
-                int lowerBound = (int) Math.Ceiling(preBoundsList.SubVector(0, nLowerBounds).Minimum()); // Minimum, since coeffs are negative
+                int lowerBound = (int) ((-1) * Math.Floor(preBoundsList.SubVector(0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
                 int upperBound = (int) Math.Floor(preBoundsList.SubVector(temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
                 /* Add new variable solution to the previous solution vector */
