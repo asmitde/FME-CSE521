@@ -137,9 +137,14 @@ namespace FME
             /* If last variable, then find integer upper and lower bounds */
             if (temp_Ab.ColumnCount == 2)
             {
-
                 int lowerBound = (int) ((-1) * Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
                 int upperBound = (int) Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
+
+                /* Return null if there are no interger solutions */
+                if (lowerBound > upperBound)
+                {
+                    return null;
+                }
 
                 List<List<double>> firstSolution = new List<List<double>>();
                 for (int i = lowerBound; i <= upperBound; i++)
@@ -186,6 +191,7 @@ namespace FME
             /* Recursively call FME with the projected matrix and receive a list of solution vectors */
             List<List<double>> solutions = DoFME(new_A, new_b);
 
+            /* If there are no solutions to the reduced system, there are no solutions to original system */
             if (solutions == null)
             {
                 return null;
@@ -224,7 +230,7 @@ namespace FME
                 int lowerBound = (int) ((-1) * Math.Floor(preBoundsList.SubVector(0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
                 int upperBound = (int) Math.Floor(preBoundsList.SubVector(temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
-                /* Add new variable solution to the previous solution vector */
+                /* Add new variable solution to the previous solution vector. If no integer solution exists, the solution vector is automatically discarded. */
                 for (int i = lowerBound; i <= upperBound; i++)
                 {
                     List<double> newSolutionVector = new List<double>(solutions[col]);
