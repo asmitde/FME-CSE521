@@ -44,7 +44,12 @@ namespace FME
             List<List<double>> allSolutions = DoFME(matrix_A, vector_b);
 
             /* Display solutions for vector x */
-            Console.WriteLine("\nSolutions to Vector x:");
+            PrintAllSolutions(allSolutions);            
+        }
+
+        private static void PrintAllSolutions(List<List<double>> allSolutions)
+        {
+            Console.WriteLine("\nSolutions to Vector x (each row represents a solution vector):\n");
 
             foreach (var solution in allSolutions)
             {
