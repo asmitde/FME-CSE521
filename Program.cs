@@ -82,10 +82,10 @@ namespace FME
             Matrix<double> temp_Ab = Matrix<double>.Build.Dense(m, n + 1);
             mat_A.Append(vec_b, temp_Ab);
 
-        #if false
+#if false
             Console.WriteLine("\ntemp_Ab:");
             Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
-        #endif
+#endif
 
             /* Divide matrix based on the upper bounds, lower bounds, and zeroes */
             Vector<double> column0 = temp_Ab.Column(0);
@@ -95,10 +95,10 @@ namespace FME
             Array.Sort(permutationKey, permutation);
             temp_Ab.PermuteRows(new Permutation(permutation));
 
-        #if true
+#if true
             Console.WriteLine("\nSorted temp_Ab:");
             Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
-        #endif
+#endif
 
             int nLowerBounds = column0.Where(i => i < 0).Count();
             int nUpperBounds = column0.Where(i => i > 0).Count();
@@ -119,7 +119,7 @@ namespace FME
                     temp_Ab[i, j] = temp_Ab[i, j] / i0Val;
                 }
             }
- 
+
             for (int i = temp_Ab.RowCount - nUpperBounds; i < temp_Ab.RowCount; i++)
             {
                 double i0Val = temp_Ab[i, 0];
@@ -129,16 +129,16 @@ namespace FME
                 }
             }
 
-        #if true
+#if true
             Console.WriteLine("\nnormalized temp_Ab:");
             Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
-        #endif
+#endif
 
             /* If last variable, then find integer upper and lower bounds */
             if (temp_Ab.ColumnCount == 2)
             {
-                int lowerBound = (int) ((-1) * Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
-                int upperBound = (int) Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
+                int lowerBound = (int)((-1) * Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, 0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
+                int upperBound = (int)Math.Floor(temp_Ab.Column(temp_Ab.ColumnCount - 1, temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
                 /* Return null if there are no interger solutions */
                 if (lowerBound > upperBound)
@@ -149,7 +149,7 @@ namespace FME
                 List<List<double>> firstSolution = new List<List<double>>();
                 for (int i = lowerBound; i <= upperBound; i++)
                 {
-                    firstSolution.Add(new List<double>(){i});
+                    firstSolution.Add(new List<double>() { i });
                 }
 
                 return firstSolution;
@@ -181,12 +181,12 @@ namespace FME
             Matrix<double> new_A = new_Ab.RemoveColumn(new_n - 1);
             Matrix<double> new_b = new_Ab.Column(new_n - 1).ToColumnMatrix();
 
-        #if true
+#if true
             Console.WriteLine("\nnew_A:");
             Console.WriteLine(new_A.ToMatrixString(new_A.RowCount, new_A.ColumnCount));
             Console.WriteLine("\nnew_b:");
             Console.WriteLine(new_b.ToMatrixString(new_b.RowCount, new_b.ColumnCount));
-        #endif
+#endif
 
             /* Recursively call FME with the projected matrix and receive a list of solution vectors */
             List<List<double>> solutions = DoFME(new_A, new_b);
@@ -195,7 +195,7 @@ namespace FME
             if (solutions == null)
             {
                 return null;
-            }           
+            }
 
             /* Calculate new bounds on current variable */
             int n_sols = solutions.Count;
@@ -207,19 +207,19 @@ namespace FME
                 mat_x.SetColumn(col, solutions[col].ToArray());
             }
 
-        #if true
+#if true
             Console.WriteLine("\nmat_x:");
             Console.WriteLine(mat_x.ToMatrixString(mat_x.RowCount, mat_x.ColumnCount));
             Console.WriteLine("\nmat_A_sub:");
             Console.WriteLine(temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved).ToMatrixString(temp_Ab.RowCount, variablesSolved));
-        #endif
+#endif
 
             Matrix<double> mat_Atimesx = temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved) * mat_x;
 
-        #if true
+#if true
             Console.WriteLine("\nmat_Atimesx:");
             Console.WriteLine(mat_Atimesx.ToMatrixString(mat_Atimesx.RowCount, mat_Atimesx.ColumnCount));
-        #endif
+#endif
 
             /* Iterate over all the existing solution vectors and create new solution vectors by adding new variable solutions */
             List<List<double>> newSolutions = new List<List<double>>();
@@ -227,8 +227,8 @@ namespace FME
             {
                 Vector<double> preBoundsList = temp_Ab.Column(temp_Ab.ColumnCount - 1) - mat_Atimesx.Column(col);
 
-                int lowerBound = (int) ((-1) * Math.Floor(preBoundsList.SubVector(0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
-                int upperBound = (int) Math.Floor(preBoundsList.SubVector(temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
+                int lowerBound = (int)((-1) * Math.Floor(preBoundsList.SubVector(0, nLowerBounds).Minimum())); // Minimum, since coeffs are negative
+                int upperBound = (int)Math.Floor(preBoundsList.SubVector(temp_Ab.RowCount - nUpperBounds, nUpperBounds).Minimum());
 
                 /* Add new variable solution to the previous solution vector. If no integer solution exists, the solution vector is automatically discarded. */
                 for (int i = lowerBound; i <= upperBound; i++)
@@ -297,7 +297,7 @@ namespace FME
             }
         }
 
-        
+
         private static void WriteSolutionsToFile(string outputfile, List<List<double>> allSolutions)
         {
             using (StreamWriter sw = new StreamWriter(outputfile))
