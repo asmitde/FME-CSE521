@@ -36,9 +36,9 @@ namespace FME
 
             /* Display Matrix data for A and b */
             Console.WriteLine("\nMatrix A:");
-            Console.WriteLine(matrix_A.ToMatrixString());
+            Console.WriteLine(matrix_A.ToMatrixString(matrix_A.RowCount, matrix_A.ColumnCount));
             Console.WriteLine("\nVector b:");
-            Console.WriteLine(vector_b.ToMatrixString());
+            Console.WriteLine(vector_b.ToMatrixString(vector_b.RowCount, vector_b.ColumnCount));
 
             /* Perform FME */
             List<List<double>> allSolutions = DoFME(matrix_A, vector_b);
@@ -84,7 +84,7 @@ namespace FME
 
         #if false
             Console.WriteLine("\ntemp_Ab:");
-            Console.WriteLine(temp_Ab.ToMatrixString());
+            Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
         #endif
 
             /* Divide matrix based on the upper bounds, lower bounds, and zeroes */
@@ -97,7 +97,7 @@ namespace FME
 
         #if true
             Console.WriteLine("\nSorted temp_Ab:");
-            Console.WriteLine(temp_Ab.ToMatrixString());
+            Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
         #endif
 
             int nLowerBounds = column0.Where(i => i < 0).Count();
@@ -131,7 +131,7 @@ namespace FME
 
         #if true
             Console.WriteLine("\nnormalized temp_Ab:");
-            Console.WriteLine(temp_Ab.ToMatrixString());
+            Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
         #endif
 
             /* If last variable, then find integer upper and lower bounds */
@@ -178,9 +178,9 @@ namespace FME
 
         #if true
             Console.WriteLine("\nnew_A:");
-            Console.WriteLine(new_A.ToMatrixString());
+            Console.WriteLine(new_A.ToMatrixString(new_A.RowCount, new_A.ColumnCount));
             Console.WriteLine("\nnew_b:");
-            Console.WriteLine(new_b.ToMatrixString());
+            Console.WriteLine(new_b.ToMatrixString(new_b.RowCount, new_b.ColumnCount));
         #endif
 
             /* Recursively call FME with the projected matrix and receive a list of solution vectors */
@@ -203,14 +203,16 @@ namespace FME
 
         #if true
             Console.WriteLine("\nmat_x:");
-            Console.WriteLine(mat_x.ToMatrixString());
+            Console.WriteLine(mat_x.ToMatrixString(mat_x.RowCount, mat_x.ColumnCount));
+            Console.WriteLine("\nmat_A_sub:");
+            Console.WriteLine(temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved).ToMatrixString(temp_Ab.RowCount, variablesSolved));
         #endif
 
             Matrix<double> mat_Atimesx = temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved) * mat_x;
 
         #if true
             Console.WriteLine("\nmat_Atimesx:");
-            Console.WriteLine(mat_Atimesx.ToMatrixString());
+            Console.WriteLine(mat_Atimesx.ToMatrixString(mat_Atimesx.RowCount, mat_Atimesx.ColumnCount));
         #endif
 
             /* Iterate over all the existing solution vectors and create new solution vectors by adding new variable solutions */
