@@ -44,7 +44,10 @@ namespace FME
             List<List<double>> allSolutions = DoFME(matrix_A, vector_b);
 
             /* Display solutions for vector x */
-            PrintAllSolutions(allSolutions);            
+            PrintAllSolutions(allSolutions);
+
+            /* Write solutions to file */
+            WriteSolutionsToFile(args[1], allSolutions);
         }
 
         private static void PrintAllSolutions(List<List<double>> allSolutions)
@@ -275,6 +278,25 @@ namespace FME
 
                     num_str = line.Split().Where(s => s != string.Empty).ToArray();
                     vector_b[i, 0] = Convert.ToDouble(num_str[0]);
+                }
+            }
+        }
+
+        
+        private static void WriteSolutionsToFile(string outputfile, List<List<double>> allSolutions)
+        {
+            using (StreamWriter sw = new StreamWriter(outputfile))
+            {
+                sw.WriteLine("\nSolutions to Vector x (each row represents a solution vector):\n");
+
+                foreach (var solution in allSolutions)
+                {
+                    foreach (var solutionVector in solution)
+                    {
+                        sw.Write(solutionVector + "\t");
+                    }
+
+                    sw.WriteLine();
                 }
             }
         }
