@@ -52,6 +52,13 @@ namespace FME
 
         private static void PrintAllSolutions(List<List<double>> allSolutions)
         {
+            if (allSolutions == null)
+            {
+                Console.WriteLine("No finite solution exists.");
+
+                return;
+            }
+
             Console.WriteLine("\nSolutions to Vector x (each row represents a solution vector):\n");
 
             foreach (var solution in allSolutions)
@@ -287,6 +294,13 @@ namespace FME
         {
             using (StreamWriter sw = new StreamWriter(outputfile))
             {
+                if (allSolutions == null)
+                {
+                    sw.WriteLine("No finite solution exists.");
+
+                    return;
+                }
+
                 sw.WriteLine("\nSolutions to Vector x (each row represents a solution vector):\n");
 
                 foreach (var solution in allSolutions)
