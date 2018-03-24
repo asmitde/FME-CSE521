@@ -79,7 +79,7 @@ The program should run for any version of Windows x64. It is tested to be workin
 2. Shift + right click to open the extended context menu and click on Open Command Prompt here (or Open Powershell Window here). You can also open command prompt or powershell and navigate to the above folder.
 3. At the prompt, issue the following command:
 ```
-FME.exe <input file> <output file>
+.\FME.exe <input file> <output file>
 ```
 
 ### Running the program on Linux
@@ -88,7 +88,7 @@ The program should run for any distribution of Linux x64. It is tested to be wor
 2. Open open a shell at the above folder location
 3. At the prompt, issue the following command:
 ```
-.\FME <input file> <output file>
+./FME <input file> <output file>
 ```
 
 ### Compiling and running the program from source
