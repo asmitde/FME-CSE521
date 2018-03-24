@@ -95,7 +95,7 @@ namespace FME
             Array.Sort(permutationKey, permutation);
             temp_Ab.PermuteRows(new Permutation(permutation));
 
-#if true
+#if false
             Console.WriteLine("\nSorted temp_Ab:");
             Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
 #endif
@@ -129,7 +129,7 @@ namespace FME
                 }
             }
 
-#if true
+#if false
             Console.WriteLine("\nnormalized temp_Ab:");
             Console.WriteLine(temp_Ab.ToMatrixString(temp_Ab.RowCount, temp_Ab.ColumnCount));
 #endif
@@ -181,7 +181,7 @@ namespace FME
             Matrix<double> new_A = new_Ab.RemoveColumn(new_n - 1);
             Matrix<double> new_b = new_Ab.Column(new_n - 1).ToColumnMatrix();
 
-#if true
+#if false
             Console.WriteLine("\nnew_A:");
             Console.WriteLine(new_A.ToMatrixString(new_A.RowCount, new_A.ColumnCount));
             Console.WriteLine("\nnew_b:");
@@ -207,7 +207,7 @@ namespace FME
                 mat_x.SetColumn(col, solutions[col].ToArray());
             }
 
-#if true
+#if false
             Console.WriteLine("\nmat_x:");
             Console.WriteLine(mat_x.ToMatrixString(mat_x.RowCount, mat_x.ColumnCount));
             Console.WriteLine("\nmat_A_sub:");
@@ -216,7 +216,7 @@ namespace FME
 
             Matrix<double> mat_Atimesx = temp_Ab.SubMatrix(0, temp_Ab.RowCount, 1, variablesSolved) * mat_x;
 
-#if true
+#if false
             Console.WriteLine("\nmat_Atimesx:");
             Console.WriteLine(mat_Atimesx.ToMatrixString(mat_Atimesx.RowCount, mat_Atimesx.ColumnCount));
 #endif
