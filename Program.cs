@@ -54,7 +54,7 @@ namespace FME
         {
             if (allSolutions == null)
             {
-                Console.WriteLine("No finite solution exists.");
+                Console.WriteLine("No finite integer solution exists.");
 
                 return;
             }
@@ -304,7 +304,7 @@ namespace FME
             {
                 if (allSolutions == null)
                 {
-                    sw.WriteLine("No finite solution exists.");
+                    sw.WriteLine("No finite integer solution exists.");
 
                     return;
                 }
